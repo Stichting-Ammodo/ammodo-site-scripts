@@ -1,0 +1,26 @@
+{
+  "name": "ammodo-website-scripts",
+  "version": "1.0.0",
+  "description": "Custom JS scripts for Ammodo Science, Art, General",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "node build.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://stefano-buik@github.com/Stichting-Ammodo/ammodo-site-scripts.git"
+  },
+  "keywords": [],
+  "author": "Stefano Buik",
+  "license": "MIT",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Stichting-Ammodo/ammodo-site-scripts/issues"
+  },
+  "homepage": "https://github.com/Stichting-Ammodo/ammodo-site-scripts#readme",
+  "devDependencies": {
+    "terser": "^5.37.0",
+    "glob": "^11.0.1"
+  }
+}
