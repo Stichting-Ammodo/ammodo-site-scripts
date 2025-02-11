@@ -98,10 +98,6 @@
     populateSection("nextMonth", sections.nextMonth, 1, currentDate);
     populateSection("twoMonths", sections.twoMonths, 2, currentDate);
     populateSection("upcoming", sections.upcoming);
-
-    document.querySelectorAll(SELECTORS.monthHeader).forEach((header) => {
-      header.style.opacity = 1;
-    });
   };
 
   // Start on DOM load
