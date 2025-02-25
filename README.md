@@ -99,7 +99,7 @@ This project leverages jsDelivr's GitHub integration for CDN hosting. When you c
    ```
    https://cdn.jsdelivr.net/gh/Stichting-Ammodo/ammodo-site-scripts@[version]/[filename]
    ```
-   **You don't need to specify the complete version number you can specify the major version and JSdelivr will automatically serve the latest version within the mayor version.*
+   **You don't need to specify the complete version number you can specify the major version and JSdelivr will automatically serve the latest version within the major version.*
 
 For example:
 ```
@@ -163,4 +163,4 @@ Processes rich text content with special caption markers:
 
 ## License
 
-This project is licensed under the MIT License - see package.json for details.
+This project is licensed under the ATABIX License - see package.json for details.
