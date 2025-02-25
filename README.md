@@ -1,6 +1,7 @@
 # Ammodo Website Scripts
 
-This repository contains custom JavaScript scripts for the Ammodo website, including implementations for Science, Art, and General sections.
+This repository contains custom JavaScript scripts for the public Ammodo websites, including implementations for Science, Art, and General websites.
+All of the files in this repository are for use for the public and does not contain any private information.
 
 ## Overview
 
