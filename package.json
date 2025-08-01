@@ -20,7 +20,8 @@
   },
   "homepage": "https://github.com/Stichting-Ammodo/ammodo-site-scripts#readme",
   "devDependencies": {
+    "glob": "^11.0.1",
     "terser": "^5.37.0",
-    "glob": "^11.0.1"
+    "clean-css": "^5.3.3"
   }
 }
