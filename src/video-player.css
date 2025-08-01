@@ -42,3 +42,14 @@
   opacity: 0;
   pointer-events: none;
 }
+
+/* Hide the player by default */
+.plyr {
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+}
+
+/* When the player is ready, fade it in */
+.plyr--ready {
+  opacity: 1;
+}

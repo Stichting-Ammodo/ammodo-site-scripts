@@ -122,6 +122,11 @@ function initializeVideoPlayers() {
       playBtn.addEventListener("click", handlePlayClick);
       
       // Player state event handlers
+      player.on("ready", (event) => {
+        const instance = event.detail.plyr;
+        instance.elements.container.classList.add('plyr--ready');
+      });
+
       player.on("play", () => {
         playBtn.classList.add("is-hidden");
         playBtn.setAttribute('aria-hidden', 'true');
