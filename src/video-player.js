@@ -16,7 +16,6 @@ const controls = [
 // Regex Patterns
 const youtubeRegEx = /^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)/;
 const vimeoRegEx = /(https?:\/\/)?(www\.)?(player\.)?vimeo\.com\/([a-z]*\/)*([0-9]{6,11})[?]?.*/;
-
 const playerInstances = [];
 
 // Helper function to extract video info from URL
