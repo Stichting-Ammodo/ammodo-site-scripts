@@ -10,7 +10,7 @@
   const getCurrentLocale = () => {
     const path = window.location.pathname;
     if (path.startsWith("/en/")) return "EN";
-    if (path.startsWith("/nl/")) return "EN";
+    if (path.startsWith("/nl/")) return "NL";
 
     return "NL";
   };
@@ -91,6 +91,15 @@
       if (category) {
         sections[category].push(item);
       }
+    });
+      
+    // Sort each section by the event's end date
+    Object.values(sections).forEach((section) => {
+    	section.sort((a, b) => {
+      	const dateA = dayjs(a.getAttribute("data-end-date"));
+        const dateB = dayjs(b.getAttribute("data-end-date"));
+        return dateA - dateB;
+      });
     });
 
     // Populate sections
