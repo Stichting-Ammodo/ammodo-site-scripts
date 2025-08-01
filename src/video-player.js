@@ -125,6 +125,7 @@ function initializeVideoPlayers() {
       player.on("ready", (event) => {
         const instance = event.detail.plyr;
         instance.elements.container.classList.add('plyr--ready');
+        playBtn.classList.add("is-ready");
       });
 
       player.on("play", () => {

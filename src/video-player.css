@@ -1,16 +1,22 @@
 /* Custom Video Player */
 .custom_video-play-btn {
-	position: absolute;
+  position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -35%);
   z-index: 7;
   cursor: pointer;
   transition: 0.2s all ease;
+  opacity: 0;
+}
+
+.custom_video-play-btn.is-ready {
+  transform: translate(-50%, -50%);
+  opacity: 1;
 }
 
 .custom_video-play-btn.is-hidden {
-	opacity: 0;
+  opacity: 0 !important;
   pointer-events: none;
   transform: translate(-50%, -50%) scale(0.8);
 }
@@ -21,15 +27,15 @@
 }
 
 .custom_video-play-btn:hover .custom_video-play-icon {
-	transform: translateX(4px);
+  transform: translateX(4px);
 }
 
 :root {
   --plyr-color-main: var(--video-player--video-player-accent);
-	--plyr-video-control-color-hover: var(--video-player--video-player-accent);
-	--plyr-audio-control-color-hover: var(--video-player--video-player-accent);
-  --plyr-video-control-background-hover: #FFFFFF;
-  --plyr-audio-control-background-hover: #FFFFFF;
+  --plyr-video-control-color-hover: var(--video-player--video-player-accent);
+  --plyr-audio-control-color-hover: var(--video-player--video-player-accent);
+  --plyr-video-control-background-hover: #ffffff;
+  --plyr-audio-control-background-hover: #ffffff;
   --plyr-font-family: "PP Neue Montreal";
 }
 
@@ -46,10 +52,12 @@
 /* Hide the player by default */
 .plyr {
   opacity: 0;
-  transition: opacity 0.3s ease-in-out;
+  transform: translateY(2rem);
+  transition: all 0.3s ease-in-out;
 }
 
 /* When the player is ready, fade it in */
 .plyr--ready {
   opacity: 1;
+  transform: translateY(0);
 }
