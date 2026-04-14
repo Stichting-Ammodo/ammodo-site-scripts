@@ -34,6 +34,168 @@ function extractVideoInfo(videoLink) {
   return { videoId: null, videoType: null };
 }
 
+// --- Caption DOM builders ---
+
+function createLanguageButton(value, label, badge, checked) {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'plyr__control';
+  btn.setAttribute('role', 'menuitemradio');
+  btn.setAttribute('aria-checked', checked ? 'true' : 'false');
+  btn.setAttribute('data-plyr', 'language');
+  btn.value = value;
+  btn.innerHTML = badge
+    ? `<span>${label}<span class="plyr__menu__value"><span class="plyr__badge">${badge}</span></span></span>`
+    : `<span>${label}</span>`;
+  return btn;
+}
+
+function buildCaptionsPanel(settingsId, tracklist) {
+  const panel = document.createElement('div');
+  panel.id = `${settingsId}-captions`;
+  panel.hidden = true;
+
+  const backBtn = document.createElement('button');
+  backBtn.type = 'button';
+  backBtn.className = 'plyr__control plyr__control--back';
+  backBtn.innerHTML =
+    '<span aria-hidden="true">Captions</span><span class="plyr__sr-only">Go back to previous menu</span>';
+  panel.appendChild(backBtn);
+
+  const menu = document.createElement('div');
+  menu.setAttribute('role', 'menu');
+  menu.appendChild(createLanguageButton('', 'Disabled', null, true));
+  tracklist.forEach((track) => {
+    menu.appendChild(
+      createLanguageButton(track.languageCode, track.displayName, track.languageCode.toUpperCase(), false)
+    );
+  });
+  panel.appendChild(menu);
+
+  return { panel, menu, backBtn };
+}
+
+function buildCaptionsHomeButton() {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'plyr__control plyr__control--forward';
+  btn.setAttribute('role', 'menuitem');
+  btn.setAttribute('aria-haspopup', 'true');
+  btn.setAttribute('data-custom-captions', '');
+  btn.innerHTML = '<span>Captions<span class="plyr__menu__value">Disabled</span></span>';
+  return btn;
+}
+
+function findCCToggle(container) {
+  let toggle = null;
+  container.querySelectorAll('[data-plyr="captions"]').forEach((btn) => {
+    if (!btn.closest('.plyr__menu__container')) toggle = btn;
+  });
+  return toggle;
+}
+
+// --- Setup Custom Captions ---
+
+function setupCustomCaptions(player, tracklist) {
+  if (!tracklist || !tracklist.length) return;
+
+  const container = player.elements.container;
+  const settingsMenu = container.querySelector('.plyr__menu__container');
+  if (!settingsMenu) return;
+
+  const homePanel = settingsMenu.querySelector('[id$="-home"]');
+  if (!homePanel) return;
+
+  const settingsId = homePanel.id.replace('-home', '');
+  const homeMenu = homePanel.querySelector('[role="menu"]');
+
+  // Clean up any existing captions UI (onApiChange can fire multiple times)
+  document.getElementById(`${settingsId}-captions`)?.remove();
+  homeMenu?.querySelector('[data-custom-captions]')?.remove();
+
+  // Build and insert captions submenu panel
+  const { panel: captionsPanel, menu: menuDiv, backBtn } = buildCaptionsPanel(settingsId, tracklist);
+  homePanel.parentNode.appendChild(captionsPanel);
+
+  // Build and insert home menu entry
+  const captionsHomeBtn = buildCaptionsHomeButton();
+  homeMenu?.appendChild(captionsHomeBtn);
+
+  // Panel navigation
+  captionsHomeBtn.addEventListener('click', () => {
+    homePanel.hidden = true;
+    captionsPanel.hidden = false;
+  });
+  backBtn.addEventListener('click', () => {
+    captionsPanel.hidden = true;
+    homePanel.hidden = false;
+  });
+
+  // State management
+  let activeLanguage = '';
+  let ccToggle = findCCToggle(container);
+
+  function setCaption(languageCode) {
+    activeLanguage = languageCode;
+    const track = tracklist.find((t) => t.languageCode === languageCode);
+
+    // Toggle YouTube captions — pass the full track object so YouTube
+    // can match it (a partial { languageCode } isn't enough for non-primary tracks)
+    if (track) {
+      player.embed.setOption('captions', 'track', track);
+      container.classList.add('plyr--captions-active');
+    } else {
+      player.embed.setOption('captions', 'track', {});
+      container.classList.remove('plyr--captions-active');
+    }
+
+    // Update menu radio states
+    menuDiv.querySelectorAll('[data-plyr="language"]').forEach((b) => {
+      b.setAttribute('aria-checked', b.value === languageCode ? 'true' : 'false');
+    });
+
+    // Update home button label
+    const valueSpan = captionsHomeBtn.querySelector('.plyr__menu__value');
+    if (valueSpan) {
+      valueSpan.textContent = track ? track.displayName : 'Disabled';
+    }
+
+    // Update CC toggle button state
+    if (ccToggle) {
+      ccToggle.setAttribute('aria-pressed', languageCode ? 'true' : 'false');
+      ccToggle.classList.toggle('plyr__control--pressed', !!languageCode);
+    }
+  }
+
+  // Language selection in captions panel
+  menuDiv.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-plyr="language"]');
+    if (!btn) return;
+    setCaption(btn.value);
+    captionsPanel.hidden = true;
+    homePanel.hidden = false;
+  });
+
+  // Override CC toggle button to use YouTube captions
+  if (ccToggle) {
+    ccToggle.classList.remove('plyr__control--hidden');
+    const freshToggle = ccToggle.cloneNode(true);
+    ccToggle.parentNode.replaceChild(freshToggle, ccToggle);
+    ccToggle = freshToggle;
+
+    ccToggle.addEventListener('click', () => {
+      if (activeLanguage) {
+        setCaption('');
+      } else if (tracklist.length) {
+        setCaption(tracklist[0].languageCode);
+      }
+    });
+  }
+
+  // Mark captions as available so Plyr shows the CC button
+  container.classList.add('plyr--captions-enabled');
+}
+
 function initializeVideoPlayers() {
   const playerContainers = document.querySelectorAll(".custom_video-container");
    playerContainers.forEach((container, index) => {
@@ -125,6 +287,15 @@ function initializeVideoPlayers() {
         const instance = event.detail.plyr;
         instance.elements.container.classList.add('plyr--ready');
         playBtn.classList.add("is-ready");
+
+        player.embed.addEventListener('onApiChange', () => {
+          const tracklist = player.embed.getOption('captions', 'tracklist');
+           if (tracklist && tracklist.length) {
+            player.embed.setOption('captions', 'track', {});
+            setupCustomCaptions(player, tracklist);
+           }
+        });
+
       });
 
       player.on("play", () => {
