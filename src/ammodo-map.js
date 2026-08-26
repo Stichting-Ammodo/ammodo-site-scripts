@@ -64,7 +64,10 @@
     const MAX_ZOOM = 5;
     const MARKER_ZOOM = 3;
     const FIT_PADDING = 80;
-    const DESKTOP = '(min-width: 992px)';
+    const DESKTOP_WIDTH = 992;
+    const DESKTOP = `(min-width: ${DESKTOP_WIDTH}px)`;
+    // MapLibre's own floor
+    const ABSOLUTE_MIN_ZOOM = -2;
 
     // how far the shuffle button drifts from the project it picks, in metres
     const SHUFFLE_MIN_DISTANCE = 500000;
@@ -153,6 +156,16 @@ ${VIEW_BUTTON}{cursor:pointer}
     const markers = [];
 
     const isDesktop = () => window.matchMedia(DESKTOP).matches;
+
+    /**
+     * A 390px-wide viewport at zoom 2 shows only ~68° of longitude, so globally
+     * spread markers cannot fit and fitBounds clamps to a view containing none
+     * of them — the map opens on empty ocean. Below the desktop breakpoint the
+     * floor drops to whatever makes the world span the viewport width, which is
+     * the natural limit anyway. Desktop keeps MIN_ZOOM unchanged.
+     */
+    const minZoomFor = (width) =>
+        width >= DESKTOP_WIDTH ? MIN_ZOOM : Math.max(ABSOLUTE_MIN_ZOOM, Math.log2(width / 512));
 
     // --- geo helpers -----------------------------------------------------
 
@@ -782,10 +795,13 @@ ${VIEW_BUTTON}{cursor:pointer}
             style,
             center: INITIAL_CENTER,
             zoom: INITIAL_ZOOM,
-            minZoom: MIN_ZOOM,
+            minZoom: minZoomFor(container.clientWidth),
             maxZoom: MAX_ZOOM,
             attributionControl: false,
         });
+
+        // keeps the floor correct when a phone is rotated
+        map.on('resize', () => map.setMinZoom(minZoomFor(container.clientWidth)));
 
         projects.forEach((project) => {
             const element = createMarkerElement(project);
