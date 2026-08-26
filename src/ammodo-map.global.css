@@ -1,0 +1,230 @@
+/* ══════════════════════════════════════════════════════════════════════
+   Ammodo projects map — design layer
+
+   Paste into the site's global style block component. Everything here is
+   cosmetic and safe to change in Webflow. Positioning, view switching and
+   the MapLibre overrides live in ammodo-map.js and are NOT duplicated here.
+
+   Two rules to respect:
+
+   1. Never set `transform` on .ammodo-marker. MapLibre writes its own
+      positioning transform onto that element as an inline style; a competing
+      rule either does nothing or throws markers into the page corner.
+      All marker transforms belong on .ammodo-marker_inner.
+
+   2. Never set `display` on .ammodo-control or .ammodo-help. The script owns
+      it — the zoom buttons and help text are desktop-only, which is behaviour
+      rather than design.
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* ── marker ─────────────────────────────────────────────────────────── */
+
+.ammodo-marker_inner {
+    display: flex;
+    flex-direction: column-reverse; /* label above the dot on mobile */
+    align-items: center;
+    gap: 8px;
+    font-size: 20px;
+    line-height: 26px;
+    cursor: pointer;
+    transition: transform 0.3s ease-out;
+}
+
+.ammodo-marker:hover .ammodo-marker_inner,
+.ammodo-marker.is-active .ammodo-marker_inner {
+    transform: scale(1.5);
+}
+
+.ammodo-marker_dot {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #adadad;
+    transition: background-color 0.3s ease;
+}
+
+.ammodo-marker:hover .ammodo-marker_dot,
+.ammodo-marker.is-active .ammodo-marker_dot {
+    background: #3ecc45;
+}
+
+/* scaled to 0.5 so it lands at full size once the parent scales up */
+.ammodo-marker_label {
+    pointer-events: none;
+    white-space: nowrap;
+    transform: scale(0.5);
+    transform-origin: bottom center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.ammodo-marker:hover .ammodo-marker_label,
+.ammodo-marker.is-active .ammodo-marker_label {
+    opacity: 1;
+}
+
+/* ── controls ───────────────────────────────────────────────────────── */
+
+.ammodo-controls {
+    right: 16px;
+    bottom: 70px; /* clears the mobile browser chrome */
+    gap: 13px;
+}
+
+.ammodo-control {
+    width: 40px;
+    height: 40px;
+    padding: 5px;
+    border: 0;
+    background: #103c12;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.ammodo-control:hover {
+    background: #1a5c1d;
+}
+
+.ammodo-control:focus-visible {
+    outline: 2px solid #3ecc45;
+    outline-offset: 2px;
+}
+
+/* ── help text ──────────────────────────────────────────────────────── */
+
+.ammodo-help {
+    padding: 16px;
+    text-align: center;
+    font-size: 28px;
+    line-height: 32.2px;
+    text-transform: lowercase;
+    color: #adadad;
+}
+
+/* ── popup ──────────────────────────────────────────────────────────── */
+
+.ammodo-popup_card {
+    width: 512px;
+    max-width: calc(100vw - 20px);
+    background: #fff;
+}
+
+.ammodo-popup_card a {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+}
+
+/* the card's meta block overlaps the image, so it needs its own fill —
+   without it the image shows through the gaps between the award, title and
+   creator lines */
+.ammodo-popup_card .blog2_meta-wrapper {
+    background: #fff;
+    transition:
+        transform 0.3s ease-out,
+        color 0.3s ease-out;
+}
+
+/* the award tag is absolutely positioned above the meta block and lands ~6px
+   clear of it, leaving a strip of image visible between the two. Anchoring by
+   its bottom edge instead butts it directly against the title. */
+.ammodo-popup_card .tag {
+    top: auto;
+    bottom: 100%;
+    background: #fff; /* the grid uses #f4f4f4, which reads as a separate block on white */
+}
+
+/* the meta text sits flush against the card edge in the popup, where the grid
+   gets its breathing room from the surrounding layout. Scoped to
+   .ammodo-popup_card so the grid and detail pages are untouched. */
+.ammodo-popup_card .blog2_meta-discipline {
+    padding: 4px;
+}
+
+.ammodo-popup_card .heading-style-card,
+.ammodo-popup_card .meta-wrapper_creator-label {
+    padding: 0 4px 4px;
+}
+
+/* reserves the image area at its final ratio before the gallery arrives, so
+   the card does not resize when it loads */
+.ammodo-popup_card .blog2_image-wrapper {
+    aspect-ratio: 4 / 3;
+}
+
+.ammodo-popup_card .blog2_image-wrapper > img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* the grid card animates this with a Webflow interaction, which cannot come
+   along on a cloned node — reproduced here instead */
+.ammodo-popup_card:hover .blog2_meta-wrapper {
+    transform: translateY(-12px);
+    color: #3ecc45;
+}
+
+/* ── popup gallery ──────────────────────────────────────────────────── */
+
+/* the script reads this back to work out its slide step, so changing it here
+   keeps the snapping aligned — no matching change needed in the JS */
+.ammodo-gallery_track {
+    gap: 4px;
+}
+
+/* the old site sits its arrows near the top of the image rather than
+   centring them vertically */
+.ammodo-gallery_nav {
+    top: 12px;
+    padding: 0 10px;
+}
+
+.ammodo-gallery_arrow {
+    width: 40px;
+    height: 40px;
+    padding: 8px;
+    background: #fff;
+    color: #103c12;
+}
+
+.ammodo-gallery_arrow:focus-visible {
+    outline: 2px solid #3ecc45;
+    outline-offset: 2px;
+}
+
+/* set on the first and last image — the script uses the button's native
+   disabled state, so this cannot fall out of step with the behaviour */
+.ammodo-gallery_arrow:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+/* ── desktop ────────────────────────────────────────────────────────── */
+
+@media (min-width: 992px) {
+    .ammodo-marker_inner {
+        flex-direction: row; /* label to the right of the dot */
+    }
+
+    .ammodo-marker:hover .ammodo-marker_inner,
+    .ammodo-marker.is-active .ammodo-marker_inner {
+        transform: scale(2);
+    }
+
+    .ammodo-marker_label {
+        position: absolute;
+        bottom: 0;
+        left: 28px;
+        transform-origin: left center;
+    }
+
+    /* the popup carries the title on desktop, so the label would duplicate it */
+    .ammodo-marker.is-active .ammodo-marker_label {
+        opacity: 0;
+    }
+
+    .ammodo-controls {
+        bottom: 16px;
+    }
+}
