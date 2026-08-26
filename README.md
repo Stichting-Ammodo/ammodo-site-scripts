@@ -15,6 +15,7 @@ The scripts in this repository handle various functionalities across the Ammodo 
 | `filters.js` | General filtering implementation with year range support | Art |
 | `hide-date-seperator.js` | Hides date separators when start/end dates are identical | Art |
 | `rich-text-rows.js` | Processes rich text content to create image rows based on caption markers | Art, Science, General |
+| `ammodo-map.js` | Interactive world map of projects, with markers, popup gallery and Finsweet-driven filtering | Architecture |
 
 ## Script Usage by Website
 
@@ -48,6 +49,13 @@ The scripts in this repository handle various functionalities across the Ammodo 
 ### Ammodo General
 - **rich-text-rows.js**:
   - /stories/story-template
+
+### Ammodo Architecture
+- **ammodo-map.js** (in the page `<head>`, not before `</body>` — see below):
+  - /projects
+  - /projects/local-scale
+  - /projects/social-engagement
+  - /projects/social-architecture
 
 ## Development Guide
 
@@ -161,6 +169,36 @@ Processes rich text content with special caption markers:
 - Removes these markers from the visible caption text
 
 
+
+### ammodo-map.js
+
+Replaces the MapLibre map from the old React site (`ammodo-awards-react`). Renders a full-viewport world map behind the projects grid and turns the existing `.filters1_view-button` into a map/grid toggle. Opens on the map.
+
+Project data is read from whichever Finsweet Collection List is on the page, so the same script serves `/projects` and the three pre-filtered award pages with no configuration. It aborts quietly if the page has no Collection List, and logs an error if it finds more than one.
+
+**Dependencies**
+- MapLibre GL JS 5.24.0, loaded from CDN by the script itself
+- `dist/map-style.json` — self-contained basemap (Natural Earth 110m land, no tile server, no API key)
+- Webflow CMS Filter (fs-attributes) — the map subscribes to `renderitems` and mirrors the result, so region/year/search all drive the markers
+
+**Webflow data contract** — each `.blog2_item` needs two hidden divs:
+```html
+<div class="display-none" data-map-coords>{{ Location Coordinates }}</div>
+<div class="display-none" data-map-location>{{ Location Text }}</div>
+```
+And the project detail template needs `data-project-gallery="true"` on `.image-gallery_container`. The popup gallery is fetched from the detail page because Webflow cannot bind a multi-image field inside a Collection List — and inlining ~50 projects' galleries would add roughly half a megabyte of markup.
+
+**Styling is split in two:**
+- *Plumbing*, inlined in `ammodo-map.js` — positioning, the `is-map-view` rules, stacking, `display` on the controls and help text, and MapLibre overrides.
+- *Design*, in the site's **global style block** — paste `src/ammodo-map.global.css` (the unminified file) and replace it wholesale so rules cannot duplicate.
+
+Two rules that will break the map if ignored, both learned the hard way:
+1. **Never set `transform` on `.ammodo-marker`.** MapLibre writes its positioning transform there as an inline style, so a competing rule either silently does nothing or throws markers into the page corner. Marker transforms belong on `.ammodo-marker_inner`.
+2. **Never set `display` on `.ammodo-control` or `.ammodo-help`.** The script owns it — desktop-only is behaviour, not design.
+
+Related gotcha in the gallery carousel: with CSS scroll-snap, *reading* `scrollLeft` forces the layout that triggers the snap, so a read behaves as a mutation. Snap has to be suppressed before the position is read, not after.
+
+**Versioning.** Unlike the other scripts, this one is pinned to an exact tag rather than `@1`, and `STYLE_URL` inside the script is pinned too. Releasing means bumping the tag, the four `<script src>` tags in Webflow, and `STYLE_URL` if the basemap ever changes. The script must stay in the `<head>`: it hides the grid before first paint, and running it before `</body>` reintroduces a flash of the grid while MapLibre loads.
 
 ## License
 

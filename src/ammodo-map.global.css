@@ -17,6 +17,45 @@
       rather than design.
    ══════════════════════════════════════════════════════════════════════ */
 
+/* ── reveal ─────────────────────────────────────────────────────────── */
+
+/* Plays once, when MapLibre creates the canvas. Toggling back from list view
+   does not recreate it, so the reveal does not repeat. Scoped under
+   #ammodo-map to outrank MapLibre's own canvas rules; the container already
+   clips overflow, so the 1.11 scale cannot spill. */
+@keyframes ammodo-map-reveal {
+    from {
+        opacity: 0;
+        transform: rotate(-2.14deg) scale(1.11);
+    }
+    to {
+        opacity: 1;
+        transform: rotate(0deg) scale(1);
+    }
+}
+
+#ammodo-map .maplibregl-canvas {
+    animation: ammodo-map-reveal 0.6s ease-out;
+}
+
+@keyframes ammodo-marker-reveal {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Markers are created in the same tick as the canvas, so delaying by the
+   reveal's own duration lands them just as it settles. `backwards` holds them
+   at opacity 0 through the delay — without it they would show immediately and
+   then fade in again. Opacity only: a transform here would fight MapLibre's
+   positioning, which is why the hover scale lives on the inner element. */
+.ammodo-marker {
+    animation: ammodo-marker-reveal 0.3s ease-out 0.6s backwards;
+}
+
 /* ── marker ─────────────────────────────────────────────────────────── */
 
 .ammodo-marker_inner {
