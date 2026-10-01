@@ -54,9 +54,14 @@
     const GALLERY_IMAGES = '.w-dyn-items img';
 
     const MAP_VIEW_CLASS = 'is-map-view';
+    const REVEALED_CLASS = 'is-revealed'; // starts the one-off reveal in the global CSS
     const LABEL_SHOW_MAP = 'world view';
     const LABEL_SHOW_LIST = 'list view';
     const HELP_TEXT = 'drag to explore';
+
+    // Remembers the map/list choice while the visitor moves between the four
+    // project pages. Session-scoped, so a fresh visit still opens on the map.
+    const VIEW_STORAGE_KEY = 'ammodo-map-view';
 
     const INITIAL_CENTER = [10, 25];
     const INITIAL_ZOOM = 2;
@@ -744,11 +749,31 @@ ${VIEW_BUTTON}{cursor:pointer}
         }
     };
 
+    // storage throws when the browser blocks it, so fall back to the map
+    const readStoredView = () => {
+        try {
+            return sessionStorage.getItem(VIEW_STORAGE_KEY) !== 'list';
+        } catch {
+            return true;
+        }
+    };
+
+    const storeView = (showMap) => {
+        try {
+            sessionStorage.setItem(VIEW_STORAGE_KEY, showMap ? 'map' : 'list');
+        } catch {
+            // not persisted; the next page opens on the map
+        }
+    };
+
     const setMapView = (showMap) => {
         document.documentElement.classList.toggle(MAP_VIEW_CLASS, showMap);
         updateViewLabel(showMap);
 
-        if (showMap) map?.resize();
+        if (showMap && map) {
+            map.resize();
+            map.getContainer().classList.add(REVEALED_CLASS);
+        }
     };
 
     /** Restores the normal page when the map cannot be shown. */
@@ -825,12 +850,16 @@ ${VIEW_BUTTON}{cursor:pointer}
 
         const button = document.querySelector(VIEW_BUTTON);
         if (button) {
-            button.addEventListener('click', () => setMapView(!isMapView()));
+            button.addEventListener('click', () => {
+                const showMap = !isMapView();
+                setMapView(showMap);
+                storeView(showMap);
+            });
         } else {
             console.warn(`[ammodo-map] view toggle "${VIEW_BUTTON}" not found`);
         }
 
-        setMapView(true);
+        setMapView(startInMapView);
 
         if (pendingFilter) {
             applyFilter(pendingFilter);
@@ -855,7 +884,7 @@ ${VIEW_BUTTON}{cursor:pointer}
             return;
         }
 
-        updateViewLabel(true);
+        updateViewLabel(startInMapView);
         connectFilter();
 
         let style;
@@ -879,8 +908,11 @@ ${VIEW_BUTTON}{cursor:pointer}
     // Hide the grid before the first paint, otherwise it flashes for as long as
     // MapLibre and the basemap take to load. Reverted by abort() if the map
     // cannot be shown, so this must run from the <head>, not before </body>.
+    // Skipped when the visitor last chose the list, which then renders as-is
+    // while the map still loads behind it for the toggle.
+    const startInMapView = readStoredView();
     injectCss();
-    document.documentElement.classList.add(MAP_VIEW_CLASS);
+    if (startInMapView) document.documentElement.classList.add(MAP_VIEW_CLASS);
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', start);
