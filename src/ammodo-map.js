@@ -135,6 +135,10 @@ ${VIEW_BUTTON}{cursor:pointer}
 .ammodo-control.is-desktop-only{display:none}
 .ammodo-help{position:absolute;left:0;right:0;bottom:0;display:none}
 
+/* MapLibre leaves the popup at z-index auto, so every marker (10+) painted
+   over the card. 20 keeps it above the idle markers while the active dot (30)
+   still sits on the card's edge. */
+.ammodo-popup{z-index:20}
 .ammodo-popup .maplibregl-popup-content{padding:0;background:transparent;box-shadow:none}
 .ammodo-popup .maplibregl-popup-tip{display:none}
 .ammodo-popup_card{position:relative}
