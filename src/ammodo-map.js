@@ -207,14 +207,45 @@ ${VIEW_BUTTON}{cursor:pointer}
     // --- data ------------------------------------------------------------
 
     /**
+     * Matches one degrees-minutes-seconds component as copied from Google Maps,
+     * e.g. 26°44'09.6"N. Minutes and seconds are optional, and the hemisphere
+     * may come before or after the number. Accepts typographic quotes too.
+     */
+    const DMS_NUMBER =
+        String.raw`(\d+(?:\.\d+)?)\s*°\s*(?:(\d+(?:\.\d+)?)\s*['′’]\s*)?(?:(\d+(?:\.\d+)?)\s*(?:"|″|”|''|′′)\s*)?`;
+    const DMS_SUFFIX = new RegExp(`${DMS_NUMBER}([NSEW])`, 'gi');
+    const DMS_PREFIX = new RegExp(`([NSEW])\\s*${DMS_NUMBER}`, 'gi');
+
+    /**
+     * Converts a DMS string like 26°44'09.6"N 55°36'41.7"E into [lat, lng].
+     * The hemisphere letters decide which value is which, so order is free.
+     */
+    const parseDms = (raw) => {
+        let lat;
+        let lng;
+        const prefixed = /^\s*[NSEW]/i.test(raw);
+        for (const match of raw.matchAll(prefixed ? DMS_PREFIX : DMS_SUFFIX)) {
+            const [deg, min = 0, sec = 0] = prefixed ? match.slice(2) : match.slice(1, 4);
+            const hemisphere = (prefixed ? match[1] : match[4]).toUpperCase();
+            const value = Number(deg) + Number(min) / 60 + Number(sec) / 3600;
+            const signed = hemisphere === 'S' || hemisphere === 'W' ? -value : value;
+            if (hemisphere === 'N' || hemisphere === 'S') lat = signed;
+            else lng = signed;
+        }
+        return lat === undefined || lng === undefined ? null : [lat, lng];
+    };
+
+    /**
      * Parses the comma-separated "Location Coordinates" field into [lng, lat].
-     * Tolerates stray whitespace, a swapped lat/lng pair, and trailing extras
-     * (one item currently has a stray ",16" appended).
+     * Tolerates stray whitespace, a swapped lat/lng pair, trailing extras
+     * (one item currently has a stray ",16" appended) and DMS notation.
      */
     const parseCoords = (raw, label) => {
         if (!raw) return null;
 
-        const parts = raw.split(',').map((part) => parseFloat(part.trim()));
+        const parts = raw.includes('°')
+            ? parseDms(raw) || []
+            : raw.split(',').map((part) => parseFloat(part.trim()));
         if (parts.length > 2) {
             console.warn(`[ammodo-map] "${label}" has ${parts.length} coordinate values, using the first two:`, raw);
         }
